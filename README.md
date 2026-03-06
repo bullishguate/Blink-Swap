@@ -2,7 +2,7 @@
 
 This Python script allows you to automate swaps between your Bitcoin (BTC) and USD (Stablesats) wallets on the Blink (Galoy) platform based on your target price. 
 
-You can make a donation to my baby onchain: 16XzdTgbSqGQMep7DZ3Ev1ZfARjWph1KP7  or lightning: cryptobaby@blink.sv
+The code is free but you can make a donation to my baby onchain: 16XzdTgbSqGQMep7DZ3Ev1ZfARjWph1KP7  or lightning: cryptobaby@blink.sv
 
 **1. Prerequisites**
 
