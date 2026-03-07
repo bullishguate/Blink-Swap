@@ -2,9 +2,9 @@ import requests
 import time
 
 # --- CONFIGURATION (Fill once) ---
-API_KEY = "YOUR_API_KEY"
-BTC_WALLET_ID = "YOUR_BTC_WALLET_ID"
-USD_WALLET_ID = "YOUR_USD_WALLET_ID"
+API_KEY = "YOUR BLINK API"
+BTC_WALLET_ID = "YOUR BTC WALLET ID"
+USD_WALLET_ID = "YOUR USD WALLET ID"
 BLINK_URL = "https://api.blink.sv/graphql"
 
 headers = {
@@ -22,17 +22,27 @@ def get_btc_price():
         print(f"⚠️ Price fetching error: {e}")
         return None
 
-def perform_intra_ledger_payment(amount, from_id, to_id, memo):
+def perform_swap(amount, from_id, to_id, memo, mode):
+
+    if mode == "BUY":
+        
+        mutation_name = "intraLedgerUsdPaymentSend"
+        input_type = "IntraLedgerUsdPaymentSendInput"
+    else:
+        
+        mutation_name = "intraLedgerPaymentSend"
+        input_type = "IntraLedgerPaymentSendInput"
+
     payload = {
-        "query": """
-        mutation IntraLedgerPaymentSend($input: IntraLedgerPaymentSendInput!) {
-          intraLedgerPaymentSend(input: $input) {
+        "query": f"""
+        mutation {mutation_name}($input: {input_type}!) {{
+          {mutation_name}(input: $input) {{
             status
-            errors {
+            errors {{
               message
-            }
-          }
-        }
+            }}
+          }}
+        }}
         """,
         "variables": {
             "input": {
@@ -52,9 +62,11 @@ def perform_intra_ledger_payment(amount, from_id, to_id, memo):
             print(f"❌ API Error: {result['errors'][0]['message']}")
             return False
             
-        data = result.get("data", {}).get("intraLedgerPaymentSend", {})
-        if data.get("errors"):
-            print(f"❌ Processing Error: {data['errors'][0]['message']}")
+        data = result.get("data", {}).get(mutation_name, {})
+        errors = data.get("errors", [])
+        
+        if errors:
+            print(f"❌ Processing Error: {errors[0]['message']}")
             return False
             
         if data.get("status") == "SUCCESS":
@@ -66,25 +78,28 @@ def perform_intra_ledger_payment(amount, from_id, to_id, memo):
         return False
 
 def main():
-    print("-" * 20)
-    print("  You can support the creator of this code by donating to his baby, onchain to: 16XzdTgbSqGQMep7DZ3Ev1ZfARjWph1KP7")
-    print("  Or on lightning to cryptobaby@blink.sv")
-    print("-" * 20)
+    print("-" * 30)
+    print("      BLINK SWAP MASTER")
+    print("-" * 30)
+    print("  Support the creator:")
+    print("  Onchain: 16XzdTgbSqGQMep7DZ3Ev1ZfARjWph1KP7")
+    print("  Lightning: cryptobaby@blink.sv")
+    print("-" * 30)
 
     print("Choose operation type:")
-    print("1. BTC -> USD (Sell at high price)")
-    print("2. USD -> BTC (Buy at low price)")
+    print("1. BTC -> USD (Sell BTC at high price)")
+    print("2. USD -> BTC (Buy BTC at low price)")
     
     choice = input("Your choice (1 or 2): ")
 
     try:
         if choice == "1":
-            target_price = float(input("At what price do you want to SELL BTC (e.g., 80000)? "))
-            amount = int(input("How many SATOSHIS do you want to swap? "))
+            target_price = float(input("At what price to SELL (e.g., 80000)? "))
+            amount = int(input("How many SATOSHIS to sell? "))
             mode = "SELL"
         elif choice == "2":
-            target_price = float(input("At what price do you want to BUY BTC (e.g., 63000)? "))
-            amount = int(input("How many USD CENTS do you want to spend (e.g., 500 for $5)? "))
+            target_price = float(input("At what price to BUY (e.g., 63000)? "))
+            amount = int(input("How many USD CENTS to spend (e.g., 33)? "))
             mode = "BUY"
         else:
             print("Invalid choice. Exiting.")
@@ -94,33 +109,31 @@ def main():
         return
 
     print(f"\n🚀 Bot started in {mode} mode.")
-    print(f"Target Price: ${target_price} | Amount: {amount} (in respective currency units)")
-    print("Monitoring market... (press Ctrl+C to stop)")
+    print(f"Target: ${target_price} | Amount: {amount}")
+    print("Monitoring... (Ctrl+C to stop)")
 
     while True:
         current_price = get_btc_price()
         
         if current_price:
-            print(f"Current Price: ${current_price} | Target: ${target_price}")
+            print(f"Current: ${current_price} | Target: ${target_price}")
             
-            should_execute = False
+            execute = False
             if mode == "SELL" and current_price >= target_price:
-                should_execute = True
-                from_wallet, to_wallet = BTC_WALLET_ID, USD_WALLET_ID
-                memo = f"Automated Sell at ${current_price}"
-            
+                execute = True
+                from_w, to_w = BTC_WALLET_ID, USD_WALLET_ID
             elif mode == "BUY" and current_price <= target_price:
-                should_execute = True
-                from_wallet, to_wallet = USD_WALLET_ID, BTC_WALLET_ID
-                memo = f"Automated Buy at ${current_price}"
+                execute = True
+                from_w, to_w = USD_WALLET_ID, BTC_WALLET_ID
 
-            if should_execute:
+            if execute:
                 print("⚡ Target reached! Executing swap...")
-                if perform_intra_ledger_payment(amount, from_wallet, to_wallet, memo):
+                memo = f"Automated {mode} at ${current_price}"
+                if perform_swap(amount, from_w, to_w, memo, mode):
                     print("🏁 Done. Script finished.")
                     break
                 else:
-                    print("❌ Operation failed, retrying in 60 seconds.")
+                    print("❌ Failed, retrying in 60s...")
 
         time.sleep(60)
 
