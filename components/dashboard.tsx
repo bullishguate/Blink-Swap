@@ -7,8 +7,9 @@ import { SwapForm, type SwapConfig } from "./swap-form";
 import { StatusLog, type LogEntry } from "./status-log";
 import { SettingsPanel } from "./settings-panel";
 import { formatPrice } from "@/lib/utils";
+import { Settings, ChevronDown, ChevronUp } from "lucide-react";
 
-interface Settings {
+interface SettingsState {
   apiKey: string;
   btcWalletId: string;
   usdWalletId: string;
@@ -19,12 +20,13 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 export function Dashboard() {
   const [isRunning, setIsRunning] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [settings, setSettings] = useState<Settings>({
+  const [settings, setSettings] = useState<SettingsState>({
     apiKey: "",
     btcWalletId: "",
     usdWalletId: "",
   });
   const [swapConfig, setSwapConfig] = useState<SwapConfig | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
   const previousPriceRef = useRef<number | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -39,7 +41,6 @@ export function Dashboard() {
 
   const currentPrice = data?.price || null;
 
-  // Store previous price for comparison
   useEffect(() => {
     if (currentPrice && currentPrice !== previousPriceRef.current) {
       previousPriceRef.current = currentPrice;
@@ -102,7 +103,6 @@ export function Dashboard() {
     [settings, currentPrice, addLog]
   );
 
-  // Monitor price and trigger swap
   useEffect(() => {
     if (!isRunning || !swapConfig || !currentPrice) return;
 
@@ -141,7 +141,6 @@ export function Dashboard() {
         "success"
       );
 
-      // Force immediate price refresh
       mutate();
     },
     [settings.apiKey, addLog, mutate]
@@ -157,50 +156,86 @@ export function Dashboard() {
   }, [addLog]);
 
   const handleSaveSettings = useCallback(
-    (newSettings: Settings) => {
+    (newSettings: SettingsState) => {
       setSettings(newSettings);
       addLog("Settings saved successfully.", "success");
     },
     [addLog]
   );
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Column - Price & Settings */}
-        <div className="lg:col-span-1 space-y-6">
-          <PriceDisplay
-            price={currentPrice}
-            previousPrice={previousPriceRef.current}
-            isLoading={isLoading}
-            lastUpdated={data ? new Date() : null}
-          />
-          <SettingsPanel onSave={handleSaveSettings} initialSettings={settings} />
-        </div>
+  const isConfigured = settings.apiKey && settings.btcWalletId && settings.usdWalletId;
 
-        {/* Middle Column - Swap Form */}
-        <div className="lg:col-span-1">
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-6 sm:py-10">
+      {/* Price Display - Full Width Hero */}
+      <div className="mb-8">
+        <PriceDisplay
+          price={currentPrice}
+          previousPrice={previousPriceRef.current}
+          isLoading={isLoading}
+          lastUpdated={data ? new Date() : null}
+        />
+      </div>
+
+      {/* Main Content - Two Columns */}
+      <div className="grid lg:grid-cols-5 gap-6">
+        {/* Left Column - Swap Form (Larger) */}
+        <div className="lg:col-span-3 space-y-6">
           <SwapForm
             currentPrice={currentPrice}
             onStartBot={handleStartBot}
             onStopBot={handleStopBot}
             isRunning={isRunning}
           />
+
+          {/* Collapsible Settings */}
+          <div className="bg-card rounded-xl border border-border overflow-hidden">
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-medium">API Settings</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {isConfigured ? "Configured and ready" : "Configure your Blink credentials"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {isConfigured && (
+                  <span className="w-2 h-2 rounded-full bg-success" />
+                )}
+                {showSettings ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+            </button>
+            {showSettings && (
+              <div className="border-t border-border">
+                <SettingsPanel onSave={handleSaveSettings} initialSettings={settings} />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right Column - Activity Log */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-2">
           <StatusLog logs={logs} />
         </div>
       </div>
 
       {/* Running Indicator */}
       {isRunning && swapConfig && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-card border border-border rounded-full px-6 py-3 shadow-lg flex items-center gap-3">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-card border border-border rounded-full px-6 py-3 shadow-xl flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-          <span className="text-sm">
-            Monitoring for {swapConfig.mode} at{" "}
-            {formatPrice(swapConfig.targetPrice)}
+          <span className="text-sm font-medium">
+            Monitoring {swapConfig.mode} at {formatPrice(swapConfig.targetPrice)}
           </span>
         </div>
       )}

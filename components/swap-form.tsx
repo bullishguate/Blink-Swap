@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRightLeft, Play, Square, Settings } from "lucide-react";
+import { ArrowRightLeft, Play, Square } from "lucide-react";
 import { cn, formatPrice } from "@/lib/utils";
 
 type SwapMode = "SELL" | "BUY";
@@ -28,7 +28,6 @@ export function SwapForm({
   const [mode, setMode] = useState<SwapMode>("SELL");
   const [targetPrice, setTargetPrice] = useState("");
   const [amount, setAmount] = useState("");
-  const [showSettings, setShowSettings] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,59 +48,63 @@ export function SwapForm({
 
   return (
     <div className="bg-card rounded-xl border border-border">
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <h2 className="font-semibold">Swap Configuration</h2>
-        <button
-          onClick={() => setShowSettings(!showSettings)}
-          className="p-2 rounded-lg hover:bg-secondary transition-colors"
-        >
-          <Settings className="h-4 w-4 text-muted-foreground" />
-        </button>
+      <div className="p-4 sm:p-6 border-b border-border">
+        <h2 className="font-semibold text-lg">Configure Swap</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Set your target price and amount to automate your trade
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-4 space-y-4">
+      <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6">
         {/* Mode Toggle */}
-        <div className="flex rounded-lg bg-secondary p-1">
-          <button
-            type="button"
-            onClick={() => setMode("SELL")}
-            className={cn(
-              "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all",
-              mode === "SELL"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Sell BTC
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("BUY")}
-            className={cn(
-              "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all",
-              mode === "BUY"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Buy BTC
-          </button>
+        <div>
+          <label className="block text-sm font-medium text-muted-foreground mb-3">
+            Trade Direction
+          </label>
+          <div className="flex rounded-lg bg-secondary p-1">
+            <button
+              type="button"
+              onClick={() => setMode("SELL")}
+              className={cn(
+                "flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all",
+                mode === "SELL"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Sell BTC
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("BUY")}
+              className={cn(
+                "flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all",
+                mode === "BUY"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Buy BTC
+            </button>
+          </div>
         </div>
 
-        {/* Visual representation */}
-        <div className="flex items-center justify-center gap-4 py-4">
+        {/* Visual Swap Indicator */}
+        <div className="flex items-center justify-center gap-4 py-2">
           <div className="text-center">
-            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-2">
-              <span className="text-lg font-bold text-primary">
+            <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-2">
+              <span className="text-base font-bold text-primary">
                 {mode === "SELL" ? "BTC" : "USD"}
               </span>
             </div>
             <span className="text-xs text-muted-foreground">From</span>
           </div>
-          <ArrowRightLeft className="h-5 w-5 text-muted-foreground" />
+          <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+            <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+          </div>
           <div className="text-center">
-            <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-2">
-              <span className="text-lg font-bold text-success">
+            <div className="w-14 h-14 rounded-xl bg-success/10 flex items-center justify-center mx-auto mb-2">
+              <span className="text-base font-bold text-success">
                 {mode === "SELL" ? "USD" : "BTC"}
               </span>
             </div>
@@ -109,56 +112,63 @@ export function SwapForm({
           </div>
         </div>
 
-        {/* Target Price */}
-        <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-2">
-            Target Price (USD)
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-              $
-            </span>
+        {/* Input Fields - Side by Side on larger screens */}
+        <div className="grid sm:grid-cols-2 gap-4">
+          {/* Target Price */}
+          <div>
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
+              Target Price (USD)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                $
+              </span>
+              <input
+                type="number"
+                value={targetPrice}
+                onChange={(e) => setTargetPrice(e.target.value)}
+                placeholder={mode === "SELL" ? "80000" : "63000"}
+                disabled={isRunning}
+                className="w-full bg-input border border-border rounded-lg py-3 px-8 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+              />
+            </div>
+          </div>
+
+          {/* Amount */}
+          <div>
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
+              {mode === "SELL" ? "Amount (Sats)" : "Amount (Cents)"}
+            </label>
             <input
               type="number"
-              value={targetPrice}
-              onChange={(e) => setTargetPrice(e.target.value)}
-              placeholder={mode === "SELL" ? "e.g., 80000" : "e.g., 63000"}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder={mode === "SELL" ? "100000" : "5000"}
               disabled={isRunning}
-              className="w-full bg-input border border-border rounded-lg py-3 px-8 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+              className="w-full bg-input border border-border rounded-lg py-3 px-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
             />
           </div>
-          {currentPrice && targetPrice && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {mode === "SELL"
-                ? `Will trigger when price rises above ${formatPrice(parseFloat(targetPrice))}`
-                : `Will trigger when price drops below ${formatPrice(parseFloat(targetPrice))}`}
-            </p>
-          )}
         </div>
 
-        {/* Amount */}
-        <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-2">
-            {mode === "SELL" ? "Amount (Satoshis)" : "Amount (USD Cents)"}
-          </label>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder={mode === "SELL" ? "e.g., 100000" : "e.g., 5000"}
-            disabled={isRunning}
-            className="w-full bg-input border border-border rounded-lg py-3 px-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-          />
-          {amount && (
-            <p className="mt-1 text-xs text-muted-foreground">
+        {/* Info Text */}
+        {currentPrice && targetPrice && (
+          <div className="bg-secondary/50 rounded-lg p-3">
+            <p className="text-sm text-muted-foreground">
               {mode === "SELL"
-                ? `${parseInt(amount).toLocaleString()} sats = ~${formatPrice((parseInt(amount) / 100000000) * (currentPrice || 0))}`
-                : `${parseInt(amount)} cents = $${(parseInt(amount) / 100).toFixed(2)}`}
+                ? `Triggers when BTC rises above ${formatPrice(parseFloat(targetPrice))}`
+                : `Triggers when BTC drops below ${formatPrice(parseFloat(targetPrice))}`}
             </p>
-          )}
-        </div>
+            {amount && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {mode === "SELL"
+                  ? `${parseInt(amount).toLocaleString()} sats = ~${formatPrice((parseInt(amount) / 100000000) * (currentPrice || 0))}`
+                  : `${parseInt(amount)} cents = $${(parseInt(amount) / 100).toFixed(2)}`}
+              </p>
+            )}
+          </div>
+        )}
 
-        {/* Status indicator */}
+        {/* Target Reached Alert */}
         {targetReached && isRunning && (
           <div className="bg-success/10 border border-success/20 rounded-lg p-3">
             <p className="text-success text-sm font-medium">
@@ -172,7 +182,7 @@ export function SwapForm({
           <button
             type="button"
             onClick={onStopBot}
-            className="w-full bg-destructive hover:bg-destructive/90 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-destructive hover:bg-destructive/90 text-white font-medium py-3.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
           >
             <Square className="h-4 w-4" />
             Stop Monitoring
@@ -181,7 +191,7 @@ export function SwapForm({
           <button
             type="submit"
             disabled={!targetPrice || !amount}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Play className="h-4 w-4" />
             Start Monitoring

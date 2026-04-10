@@ -1,6 +1,6 @@
 "use client";
 
-import { TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
+import { TrendingUp, TrendingDown, RefreshCw, Bitcoin } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 
 interface PriceDisplayProps {
@@ -21,59 +21,78 @@ export function PriceDisplay({
   const isUp = priceChange >= 0;
 
   return (
-    <div className="bg-card rounded-xl p-6 border border-border">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-          BTC / USD
-        </h2>
-        <div className="flex items-center gap-2">
-          {isLoading && (
-            <RefreshCw className="h-4 w-4 text-muted-foreground animate-spin" />
-          )}
-          {lastUpdated && (
-            <span className="text-xs text-muted-foreground">
-              {lastUpdated.toLocaleTimeString()}
-            </span>
-          )}
+    <div className="bg-card rounded-2xl p-6 sm:p-8 border border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+        {/* Main Price Section */}
+        <div className="flex items-center gap-4 sm:gap-6">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Bitcoin className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                Bitcoin
+              </h2>
+              <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded">
+                BTC/USD
+              </span>
+            </div>
+            <div className="flex items-baseline gap-3">
+              <span className="text-3xl sm:text-5xl font-bold tracking-tight">
+                {price ? formatPrice(price) : "---"}
+              </span>
+              {priceChange !== 0 && (
+                <div
+                  className={`flex items-center gap-1 ${
+                    isUp ? "text-success" : "text-destructive"
+                  }`}
+                >
+                  {isUp ? (
+                    <TrendingUp className="h-4 w-4" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4" />
+                  )}
+                  <span className="text-sm font-semibold">
+                    {isUp ? "+" : ""}
+                    {priceChange.toFixed(2)}%
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-end gap-4">
-        <span className="text-4xl font-bold tracking-tight">
-          {price ? formatPrice(price) : "---"}
-        </span>
-        {priceChange !== 0 && (
-          <div
-            className={`flex items-center gap-1 pb-1 ${
-              isUp ? "text-success" : "text-destructive"
-            }`}
-          >
-            {isUp ? (
-              <TrendingUp className="h-4 w-4" />
+        {/* Stats Section */}
+        <div className="flex items-center gap-6 sm:gap-8">
+          <div className="grid grid-cols-3 gap-6 sm:gap-8">
+            <div className="text-center sm:text-right">
+              <span className="text-xs text-muted-foreground block mb-1">24h High</span>
+              <span className="font-semibold text-sm sm:text-base">
+                {price ? formatPrice(price * 1.02) : "---"}
+              </span>
+            </div>
+            <div className="text-center sm:text-right">
+              <span className="text-xs text-muted-foreground block mb-1">24h Low</span>
+              <span className="font-semibold text-sm sm:text-base">
+                {price ? formatPrice(price * 0.98) : "---"}
+              </span>
+            </div>
+            <div className="text-center sm:text-right">
+              <span className="text-xs text-muted-foreground block mb-1">Volume</span>
+              <span className="font-semibold text-sm sm:text-base">$42.1B</span>
+            </div>
+          </div>
+
+          {/* Refresh Indicator */}
+          <div className="hidden sm:flex items-center gap-2 text-muted-foreground border-l border-border pl-6">
+            {isLoading ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
             ) : (
-              <TrendingDown className="h-4 w-4" />
+              <RefreshCw className="h-4 w-4" />
             )}
-            <span className="text-sm font-medium">
-              {isUp ? "+" : ""}
-              {priceChange.toFixed(2)}%
+            <span className="text-xs">
+              {lastUpdated ? lastUpdated.toLocaleTimeString() : "--:--"}
             </span>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-4 pt-4 border-t border-border">
-        <div className="grid grid-cols-3 gap-4 text-sm">
-          <div>
-            <span className="text-muted-foreground block">24h High</span>
-            <span className="font-medium">{price ? formatPrice(price * 1.02) : "---"}</span>
-          </div>
-          <div>
-            <span className="text-muted-foreground block">24h Low</span>
-            <span className="font-medium">{price ? formatPrice(price * 0.98) : "---"}</span>
-          </div>
-          <div>
-            <span className="text-muted-foreground block">Volume</span>
-            <span className="font-medium">$42.1B</span>
           </div>
         </div>
       </div>
